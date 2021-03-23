@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block css_link %}
+    <link rel='stylesheet' href="{{url_for('static', filename='css/working_journal.css')}}">
+{% endblock %}
+
+
+{% block content %}
+    <div id='title'>
+		<h2>Works Log</h2>
+	</div>
+
+	<div id='log_container'>
+        {% for action in data %}
+		    <div>
+			    <div><h3>Action #{{loop.index}}</h3></div>
+			    <table>
+				    <tr class='header_row'>
+					    <th class='column_40'>Title of activity</th>
+					    <th class='column_15'>Team Leader</th>
+					    <th class='column_15'>Duration</th>
+					    <th>List of collaborators</th>
+					    <th class='column_10'>Is finished</th>
+				    </tr>
+				    <tr>
+					    <td>{{action.job}}</td>
+					    <td>{{action.team_leader.name}} {{action.team_leader.surname}}</td>
+					    <td>{{action.work_size}} hours</td>
+					    <td>{{action.collaborators_id}}</td>
+					    <td>{% if action.is_finished %}Is finished{% else %} Is not finished {% endif %}</td>
+				    </tr>
+			    </table>
+		    </div>
+        {% endfor %}
+	</div>
+{% endblock %}

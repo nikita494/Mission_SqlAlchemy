@@ -1,0 +1,39 @@
+.flexbox{
+	display: flex;
+}
+
+#header{
+	width: 100vw;
+}
+
+#top{
+	background-color: #f8f9fa;
+	justify-content: space-between;
+	align-content: center;
+	flex-direction: row;
+}
+
+#mission_logo{
+	font-weight: bold;
+	margin-right: 5%;
+}
+
+#motivation{
+	font-weight: bold;
+	color: #d5d1cf;
+}
+
+.center_text{
+	display: flex;
+	justify-content: center;
+	align-content: center;
+	flex-direction: column;
+}
+
+.center_text > span{
+	display: block;
+}
+
+*{
+	font-family: Arial;
+}
