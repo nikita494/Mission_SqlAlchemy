@@ -1,10 +1,11 @@
 import sqlalchemy
 from .db_session import SqlAlchemyBase
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import UserMixin
 import datetime
 
 
-class User(SqlAlchemyBase):
+class User(SqlAlchemyBase, UserMixin):
     __tablename__ = 'users'
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
@@ -23,3 +24,6 @@ class User(SqlAlchemyBase):
 
     def check_password(self, password):
         return check_password_hash(self.hashed_password, password)
+
+    def __repr__(self):
+        return self.name + ' ' + self.surname

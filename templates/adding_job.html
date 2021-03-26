@@ -4,21 +4,16 @@
     <link rel='stylesheet' href="{{url_for('static', filename='css/form.css')}}">
 {% endblock %}
 
+{% set out_name = ['submit', 'is_finished'] %}
 
 {% block content %}
 <form action="" method="post" novalidate>
-    <h3>Register Form</h3>
+    <h3>Adding a Job</h3>
     {{form.hidden_tag()}}
-    {% for field in form if field.name != 'csrf_token' and field.name != 'submit' %}
+    {% for field in form if field.name != 'csrf_token' and field.name not in out_name %}
         <p>
             {{field.label()}}<br>
-            {% if 'Password' not in field.label() %}
-                {{field(class='form-control')}}<br>
-            {% elif 'email' in field.name%}
-                {{field(class='form-control', type='email')}}<br>
-            {% else %}
-                {{field(class='form-control', type='password')}}<br>
-            {% endif %}
+            {{field(class='form-control')}}<br>
             {% for error in field.errors %}
                 <span class="alert alert-danger" role="alert">
                     {{ error }}
@@ -26,6 +21,7 @@
             {% endfor %}
         </p>
     {% endfor %}
+    <p>{{ form.is_finished() }} {{form.is_finished.label()}}</p>
     <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
 </form>
 

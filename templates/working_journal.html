@@ -26,7 +26,11 @@
 					    <td>{{action.job}}</td>
 					    <td>{{action.team_leader.name}} {{action.team_leader.surname}}</td>
 					    <td>{{action.work_size}} hours</td>
-					    <td>{{action.collaborators_id}}</td>
+					    <td>
+							{% for user in action.collaborators %}
+								{{user.name}} {{user.surname}} {% if not loop.last %}, {% endif %}
+							{% endfor %}
+						</td>
 					    <td>{% if action.is_finished %}Is finished{% else %} Is not finished {% endif %}</td>
 				    </tr>
 			    </table>
