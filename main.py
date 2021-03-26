@@ -25,10 +25,13 @@ def add_job():
     form = AddingJobForm()
     if form.validate_on_submit():
         session = db_session.create_session()
-        session.add(Jobs(team_leader_id=form.team_leader_id.data,
-                         job=form.job.data, work_size=int(form.work_size.data),
-                         collaborators_id=form.collaborators_id.data,
-                         is_finished=form.is_finished.data))
+        job = Jobs(team_leader_id=form.team_leader_id.data,
+                   job=form.job.data, work_size=int(form.work_size.data),
+                   is_finished=form.is_finished.data)
+        for user_id in list(map(int, form.collaborators_id.split(', '))):
+            job.collaborators.append(session.query(User).filter(User.id == user_id).first())
+        session.add(job)
+        session.commit()
         return redirect('/')
     return render_template('adding_job.html', title='Adding a job',
                            current_user=flask_login.current_user, form=form)
