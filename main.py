@@ -2,9 +2,8 @@ from flask import Flask
 from data import db_session
 from data.jobs import Jobs
 from data.users import User
-from flask import render_template
 from forms import *
-from flask import redirect
+from flask import redirect, request, abort, render_template
 from flask_login import LoginManager
 from flask_login import login_user, logout_user, login_required
 import flask_login
@@ -28,7 +27,7 @@ def add_job():
         job = Jobs(team_leader_id=form.team_leader_id.data,
                    job=form.job.data, work_size=int(form.work_size.data),
                    is_finished=form.is_finished.data)
-        for user_id in list(map(int, form.collaborators_id.split(', '))):
+        for user_id in list(map(int, form.collaborators_id.data.split(', '))):
             job.collaborators.append(session.query(User).filter(User.id == user_id).first())
         session.add(job)
         session.commit()
@@ -61,6 +60,66 @@ def register():
         return redirect('/')
     return render_template('register.html', title='Registration',
                            current_user=flask_login.current_user, form=form)
+
+
+@app.route('/<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit_job(id):
+    jobs = None
+    form = AddingJobForm()
+    if request.method == "GET":
+        session = db_session.create_session()
+        if flask_login.current_user.id != 1:
+            jobs = session.query(Jobs).filter(Jobs.id == id,
+                                              Jobs.team_leader == flask_login.current_user).first()
+        else:
+            jobs = session.query(Jobs).filter(Jobs.id == id).first()
+        if jobs:
+            form.job.data = jobs.job
+            form.work_size.data = jobs.work_size
+            form.team_leader_id.data = jobs.team_leader_id
+            form.is_finished.data = jobs.is_finished
+            form.collaborators_id.data = ', '.join([str(i.id) for i in jobs.collaborators])
+        else:
+            abort(404)
+    if form.validate_on_submit():
+        session = db_session.create_session()
+        if flask_login.current_user.id != 1:
+            jobs = session.query(Jobs).filter(Jobs.id == id,
+                                              Jobs.team_leader == flask_login.current_user).first()
+        else:
+            jobs = session.query(Jobs).filter(Jobs.id == id).first()
+        if jobs:
+            jobs.job = form.job.data
+            jobs.work_size = form.work_size.data
+            jobs.team_leader_id = form.team_leader_id.data
+            jobs.is_finished = form.is_finished.data
+            for id in map(int, form.collaborators_id.data.split(', ')):
+                jobs.collaborators.append(session.query(User).filter(User.id == id).first())
+            session.commit()
+            return redirect('/')
+        else:
+            abort(404)
+    return render_template('adding_job.html', title='Change Job', form=form,
+                           current_user=flask_login.current_user)
+
+
+@app.route('/delete_job/<int:id>')
+@login_required
+def delete_job(id):
+    session = db_session.create_session()
+    jobs = None
+    if flask_login.current_user.id != 1:
+        jobs = session.query(Jobs).filter(Jobs.id == id,
+                                          Jobs.team_leader == flask_login.current_user).first()
+    else:
+        jobs = session.query(Jobs).filter(Jobs.id == id).first()
+    if jobs:
+        session.delete(jobs)
+        session.commit()
+    else:
+        abort(404)
+    return redirect('/')
 
 
 @app.route('/login', methods=['GET', 'POST'])

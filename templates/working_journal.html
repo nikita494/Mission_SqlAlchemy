@@ -11,6 +11,7 @@
 	</div>
 
 	<div id='log_container'>
+		<div><a class='btn btn-secondary' href="/addjob">Add job</a></div>
         {% for action in data %}
 		    <div>
 			    <div><h3>Action #{{loop.index}}</h3></div>
@@ -34,6 +35,16 @@
 					    <td>{% if action.is_finished %}Is finished{% else %} Is not finished {% endif %}</td>
 				    </tr>
 			    </table>
+				{% if current_user.is_authenticated and (current_user == action.team_leader.user or current_user.id == 1) %}
+    				<div>
+        				<a href="/{{ action.id }}" class="btn btn-warning">
+            				Изменить
+        				</a>
+        				<a href="/delete_job/{{ action.id }}" class="btn btn-danger">
+            				Удалить
+        				</a>
+    				</div>
+				{% endif %}
 		    </div>
         {% endfor %}
 	</div>
