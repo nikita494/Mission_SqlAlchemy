@@ -1,4 +1,6 @@
 # noinspection PyUnresolvedReferences
-from . import users
+from .jobs import *
 # noinspection PyUnresolvedReferences
-from . import jobs
+from .users import *
+# noinspection PyUnresolvedReferences
+from .departments import *

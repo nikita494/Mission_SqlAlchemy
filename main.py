@@ -1,20 +1,22 @@
 from flask import Flask
 from data import db_session
-from data.jobs import Jobs
-from data.users import User
 from forms import *
+from data.__all_models import *
 from flask import redirect, request, abort, render_template
 from flask_login import LoginManager
 from flask_login import login_user, logout_user, login_required
+from api_jobs import jobs_api_blueprint
 import flask_login
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
-db_session.global_init("db/mission.db")
+app = Flask(__name__, template_folder='templates')
 login_manager = LoginManager()
-login_manager.init_app(app)
 
 
 def main():
+    app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
+    app.config['JSON_AS_ASCII'] = False
+    db_session.global_init("db/mission.db")
+    login_manager.init_app(app)
+    app.register_blueprint(jobs_api_blueprint)
     app.run()
 
 
@@ -24,6 +26,7 @@ def add_job():
     form = AddingJobForm()
     if form.validate_on_submit():
         session = db_session.create_session()
+        # noinspection PyArgumentList
         job = Jobs(team_leader_id=form.team_leader_id.data,
                    job=form.job.data, work_size=int(form.work_size.data),
                    is_finished=form.is_finished.data)
@@ -64,16 +67,15 @@ def register():
 
 @app.route('/<int:id>', methods=['GET', 'POST'])
 @login_required
-def edit_job(id):
-    jobs = None
+def edit_job(job_id):
     form = AddingJobForm()
     if request.method == "GET":
         session = db_session.create_session()
         if flask_login.current_user.id != 1:
-            jobs = session.query(Jobs).filter(Jobs.id == id,
+            jobs = session.query(Jobs).filter(Jobs.id == job_id,
                                               Jobs.team_leader == flask_login.current_user).first()
         else:
-            jobs = session.query(Jobs).filter(Jobs.id == id).first()
+            jobs = session.query(Jobs).filter(Jobs.id == job_id).first()
         if jobs:
             form.job.data = jobs.job
             form.work_size.data = jobs.work_size
@@ -85,17 +87,17 @@ def edit_job(id):
     if form.validate_on_submit():
         session = db_session.create_session()
         if flask_login.current_user.id != 1:
-            jobs = session.query(Jobs).filter(Jobs.id == id,
+            jobs = session.query(Jobs).filter(Jobs.id == job_id,
                                               Jobs.team_leader == flask_login.current_user).first()
         else:
-            jobs = session.query(Jobs).filter(Jobs.id == id).first()
+            jobs = session.query(Jobs).filter(Jobs.id == job_id).first()
         if jobs:
             jobs.job = form.job.data
             jobs.work_size = form.work_size.data
             jobs.team_leader_id = form.team_leader_id.data
             jobs.is_finished = form.is_finished.data
-            for id in map(int, form.collaborators_id.data.split(', ')):
-                jobs.collaborators.append(session.query(User).filter(User.id == id).first())
+            for job_id in map(int, form.collaborators_id.data.split(', ')):
+                jobs.collaborators.append(session.query(User).filter(User.id == job_id).first())
             session.commit()
             return redirect('/')
         else:
@@ -106,14 +108,13 @@ def edit_job(id):
 
 @app.route('/delete_job/<int:id>')
 @login_required
-def delete_job(id):
+def delete_job(job_id):
     session = db_session.create_session()
-    jobs = None
     if flask_login.current_user.id != 1:
-        jobs = session.query(Jobs).filter(Jobs.id == id,
+        jobs = session.query(Jobs).filter(Jobs.id == job_id,
                                           Jobs.team_leader == flask_login.current_user).first()
     else:
-        jobs = session.query(Jobs).filter(Jobs.id == id).first()
+        jobs = session.query(Jobs).filter(Jobs.id == job_id).first()
     if jobs:
         session.delete(jobs)
         session.commit()
@@ -141,6 +142,11 @@ def login():
 def load_user(user_id):
     db_sess = db_session.create_session()
     return db_sess.query(User).get(user_id)
+
+
+@login_manager.unauthorized_handler
+def unauthorized_callback():
+    return redirect('/login')
 
 
 @app.route('/logout')
