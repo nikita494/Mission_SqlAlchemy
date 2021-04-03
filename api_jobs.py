@@ -27,7 +27,7 @@ def get_jobs():
 @jobs_api_blueprint.route('/api/jobs/<int:job_id>')
 def get_jobs_by_id(job_id):
     session = db_session.create_session()
-    jobs = session.query(Jobs).filter(Jobs.id == job_id).first()
+    jobs = session.query(Jobs).get(job_id)
     if jobs:
         return jsonify({'job': jobs.to_dict()})
     else:
@@ -55,4 +55,35 @@ def create_job():
         session.commit()
     except IntegrityError:
         return jsonify({'error': 'Id already exists'})
+    return jsonify({'success': 'OK'})
+
+
+@jobs_api_blueprint.route('/api/jobs/<int:job_id>', methods=['DELETE'])
+def delete_jobs(job_id):
+    session = db_session.create_session()
+    jobs = session.query(Jobs).get(job_id)
+    if not jobs:
+        return jsonify({'error': 'Not found'})
+    session.delete(jobs)
+    session.commit()
+    return jsonify({'success': 'OK'})
+
+
+@jobs_api_blueprint.route('/api/jobs/<int:job_id>', methods=['PUT'])
+def update_jobs(job_id):
+    job_fields = ['team_leader_id', 'job', 'work_size', 'is_finished', 'collaborators']
+    session = db_session.create_session()
+    jobs = session.query(Jobs).get(job_id)
+    if not jobs:
+        return jsonify({'error': 'Not found'})
+    if not request.json:
+        return jsonify({'error': 'Empty request'})
+    if 'id' in request.json or any([key not in job_fields for key in request.json]):
+        return jsonify({'error': 'Bad request'})
+    for field in job_fields[:-1]:
+        if field in request.json:
+            jobs.__setattr__(field, request.json[field])
+    if 'collaborators' in request.json:
+        jobs.collaborators[:] = [session.query(User).get(i) for i in request.json['collaborators']]
+    session.commit()
     return jsonify({'success': 'OK'})
